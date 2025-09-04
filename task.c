@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stdbool.h>
 
+#define WIDTH 50.0
+
 struct plane_limits
 {
     float x0;
@@ -76,7 +78,8 @@ void calculate_x_interval_at_y(struct rectangle *rect, float y, float *x_start, 
     // Check intersection of horizontal line y with each edge of rectangle
     struct point corners[4] = {rect->A, rect->B, rect->C, rect->D};
     
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         struct point p1 = corners[i];
         struct point p2 = corners[(i + 1) % 4];
         
@@ -84,12 +87,16 @@ void calculate_x_interval_at_y(struct rectangle *rect, float y, float *x_start, 
         float min_y = fmin(p1.y, p2.y);
         float max_y = fmax(p1.y, p2.y);
         
-        if (y >= min_y && y <= max_y) {
-            if (fabs(p2.y - p1.y) < 1e-6) {
+        if (y >= min_y && y <= max_y)
+        {
+            if (fabs(p2.y - p1.y) < 1e-6)
+            {
                 // Horizontal edge - add both x coordinates
                 if (valid_count < 4) x_coords[valid_count++] = p1.x;
                 if (valid_count < 4) x_coords[valid_count++] = p2.x;
-            } else {
+            } 
+            else
+            {
                 // Non-horizontal edge - calculate intersection
                 float t = (y - p1.y) / (p2.y - p1.y);
                 float x_intersect = p1.x + t * (p2.x - p1.x);
@@ -113,7 +120,8 @@ void calculate_x_interval_at_y(struct rectangle *rect, float y, float *x_start, 
 }
 
 // Compare function for sorting intervals
-int compare_intervals(const void *a, const void *b) {
+int compare_intervals(const void *a, const void *b)
+{
     struct interval *ia = (struct interval*)a;
     struct interval *ib = (struct interval*)b;
     if (ia->start < ib->start) return -1;
@@ -122,8 +130,10 @@ int compare_intervals(const void *a, const void *b) {
 }
 
 // Check if intervals cover [0, map_size] and find gap location if exists
-bool intervals_cover_range_with_gap(struct interval *intervals, int count, float map_size, float *gap_x) {
-    if (count == 0) {
+bool intervals_cover_range_with_gap(struct interval *intervals, int count, float map_size, float *gap_x)
+{
+    if (count == 0)
+    {
         *gap_x = 0;
         return false;
     }
@@ -133,8 +143,10 @@ bool intervals_cover_range_with_gap(struct interval *intervals, int count, float
     float current_pos = 0.0;
     int i = 0;
     
-    while (current_pos < map_size && i < count) {
-        if (intervals[i].start >= current_pos + 1e-6) {
+    while (current_pos < map_size && i < count)
+    {
+        if (intervals[i].start >= current_pos + 1e-6)
+        {
             // Gap found - return the gap location
             *gap_x = current_pos;
             return false;
@@ -142,7 +154,8 @@ bool intervals_cover_range_with_gap(struct interval *intervals, int count, float
         
         // Find the interval that extends furthest from current position
         float max_end = intervals[i].end;
-        while (i < count && intervals[i].start <= current_pos + 1e-6) {
+        while (i < count && intervals[i].start <= current_pos + 1e-3)
+        {
             max_end = fmax(max_end, intervals[i].end);
             i++;
         }
@@ -152,28 +165,33 @@ bool intervals_cover_range_with_gap(struct interval *intervals, int count, float
     
     // Changed this condition - now we require coverage to reach exactly map_size
     // If coverage stops before map_size, report gap at the limit + 0.001
-    if (current_pos < map_size) {
-        *gap_x = map_size + 0.001f;  // Gap at the very limit
+    if (current_pos < map_size)
+    {
+        *gap_x = current_pos + 0.001f;  // Gap at the very limit
         return false;
     }
     
     return true;  // Full coverage
 }
 
-bool check_full_coverage_optimized(struct rectangle *rectangles, int planes, int map_size, float *gap_x, float *gap_y) {
+bool check_full_coverage_optimized(struct rectangle *rectangles, int planes, int map_size, float *gap_x, float *gap_y)
+{
     // For each y-coordinate (integer), compute x-intervals covered by rectangles
-    for (int y = 0; y < map_size; y++) {
+    for (int y = 0; y < map_size; y++)
+    {
         struct interval y_intervals[100];  // Max 100 planes
         int interval_count = 0;
         
         // Find which rectangles intersect this y-coordinate
-        for (int p = 0; p < planes; p++) {
+        for (int p = 0; p < planes; p++)
+        {
             float min_y = fmin(fmin(rectangles[p].A.y, rectangles[p].B.y), 
                               fmin(rectangles[p].C.y, rectangles[p].D.y));
             float max_y = fmax(fmax(rectangles[p].A.y, rectangles[p].B.y), 
                               fmax(rectangles[p].C.y, rectangles[p].D.y));
             
-            if (y >= min_y && y <= max_y) {
+            if (y >= min_y && y <= max_y)
+            {
                 // Calculate x-interval for this rectangle at y-coordinate
                 float x_start, x_end;
                 calculate_x_interval_at_y(&rectangles[p], y, &x_start, &x_end);
@@ -185,8 +203,9 @@ bool check_full_coverage_optimized(struct rectangle *rectangles, int planes, int
         }
         
         // Check if intervals cover [0, map_size] for this y and find gap location
-        if (!intervals_cover_range_with_gap(y_intervals, interval_count, map_size, gap_x)) {
-            *gap_y = y;
+        if (!intervals_cover_range_with_gap(y_intervals, interval_count, map_size, gap_x))
+        {
+            *gap_y = y + 0.001f;
             return false;  // Gap found at y-coordinate
         }
     }
@@ -240,6 +259,10 @@ int main(int argc, char* argv[])
     struct plane_limits plane[planes];
     struct rectangle rec[planes];
     
+    if (argc > 1) // Means debug
+    {
+        printf("Map size: %d\n", map);
+    }
     while(cont < planes)
     {
         fscanf(fp,"%f %f %f %f",&x0,&y0,&x1,&y1);
@@ -247,7 +270,7 @@ int main(int argc, char* argv[])
         plane[cont].x1 = x1;
         plane[cont].y0 = y0;
         plane[cont].y1 = y1;
-        rec[cont] = get_rectangle_from_line(plane[cont], 50.0f);
+        rec[cont] = get_rectangle_from_line(plane[cont], WIDTH);
         
         // if the argc > 1, this means its running the tests. so print verbosity
         if(argc > 1)

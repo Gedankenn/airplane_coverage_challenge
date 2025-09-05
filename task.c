@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define WIDTH 50.000
 
@@ -211,7 +212,9 @@ int main(int argc, char* argv[])
     int planes = 0;
     float x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f;
     FILE* fp, *fp2;
-    
+    clock_t start, end;
+
+    start = clock();
     if(argc > 1)
     {
         fp = fopen(argv[1], "r");
@@ -289,5 +292,8 @@ int main(int argc, char* argv[])
     }
     
     fclose(fp2);
+    end = clock();
+    double run_time = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Total run time: %f seconds\n",run_time);
     return 0;
 }

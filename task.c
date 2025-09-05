@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sys/resource.h>
 
 #define WIDTH 50.000
 
@@ -213,6 +214,8 @@ int main(int argc, char* argv[])
     float x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f;
     FILE* fp, *fp2;
     clock_t start, end;
+    struct rusage usage;
+
 
     start = clock();
     if(argc > 1)
@@ -294,6 +297,8 @@ int main(int argc, char* argv[])
     fclose(fp2);
     end = clock();
     double run_time = (double)(end-start)/CLOCKS_PER_SEC;
+    getrusage(RUSAGE_SELF, &usage);
     printf("Total run time: %f seconds\n",run_time);
+    printf("Max memory used: %ld KB\n", usage.ru_maxrss);
     return 0;
 }

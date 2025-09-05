@@ -48,7 +48,7 @@ struct rectangle get_rectangle_from_line(struct plane_limits plane, float width)
     float px = -ny;
     float py = nx;
     
-    // Half width offset
+    // width offset
     float offset_x = px * width;
     float offset_y = py * width;
     

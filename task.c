@@ -132,22 +132,22 @@ int compare_intervals(const void *a, const void *b)
 }
 
 // Check if intervals cover [0, map_size] and find gap location if exists
-bool intervals_cover_range_with_gap(struct interval *v, int n, float map_size, float *gap_x) {
+bool intervals_cover_range_with_gap(struct interval *intervals, int intervals_count, float map_size, float *gap_x) {
     const float EPS = 1e-3f;
-    qsort(v, n, sizeof(*v), compare_intervals);
+    qsort(intervals, intervals_count, sizeof(*intervals), compare_intervals);
     float cur = 0.0f;
     int i = 0;
     while (cur < map_size - EPS) 
     {
-        if (i >= n || v[i].start > cur + EPS) 
+        if (i >= intervals_count || intervals[i].start > cur + EPS) 
         { 
             *gap_x = cur; 
             return false;
         }
         float best = cur;
-        while (i < n && v[i].start <= cur + EPS) 
+        while (i < intervals_count && intervals[i].start <= cur + EPS) 
         { 
-            best = fmaxf(best, v[i].end); 
+            best = fmaxf(best, intervals[i].end); 
             i++;
         }
         if (best <= cur + EPS) 

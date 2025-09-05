@@ -6,6 +6,8 @@
 #include <sys/resource.h>
 
 #define WIDTH 50.000
+#define MAX_MAP_SIZE 1000
+#define MAX_PLANES 100
 
 struct plane_limits
 {
@@ -166,7 +168,7 @@ bool check_full_coverage_optimized(struct rectangle *rectangles, int planes, int
     // For each y-coordinate (integer), compute x-intervals covered by rectangles
     for (float y = 0; y < map_size; y+=0.001)
     {
-        struct interval y_intervals[100];  // Max 100 planes
+        struct interval y_intervals[MAX_PLANES];  // Max 100 planes
         int interval_count = 0;
         
         // Find which rectangles intersect this y-coordinate
@@ -236,7 +238,7 @@ int main(int argc, char* argv[])
     
     //Read the map size 
     fscanf(fp,"%d", &map);
-    if(map > 1000 || map < 1)
+    if(map > MAX_MAP_SIZE || map < 1)
     {
         fprintf(fp2,"ERROR\n");
         fclose(fp2);
@@ -245,7 +247,7 @@ int main(int argc, char* argv[])
     
     // Read the airplane number
     fscanf(fp,"%d", &planes);
-    if(planes > 100 || planes < 1)
+    if(planes > MAX_PLANES || planes < 1)
     {
         fprintf(fp2,"ERROR\n");
         fclose(fp2);

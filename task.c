@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define WIDTH 50.0
+#define WIDTH 50.000
 
 struct plane_limits
 {
@@ -89,7 +89,7 @@ void calculate_x_interval_at_y(struct rectangle *rect, float y, float *x_start, 
         
         if (y >= min_y && y <= max_y)
         {
-            if (fabs(p2.y - p1.y) < 1e-6)
+            if (fabs(p2.y - p1.y) < 1e-3)
             {
                 // Horizontal edge - add both x coordinates
                 if (valid_count < 4) x_coords[valid_count++] = p1.x;
@@ -130,54 +130,39 @@ int compare_intervals(const void *a, const void *b)
 }
 
 // Check if intervals cover [0, map_size] and find gap location if exists
-bool intervals_cover_range_with_gap(struct interval *intervals, int count, float map_size, float *gap_x)
-{
-    if (count == 0)
-    {
-        *gap_x = 0;
-        return false;
-    }
-    
-    qsort(intervals, count, sizeof(struct interval), compare_intervals);
-    
-    float current_pos = 0.0;
+bool intervals_cover_range_with_gap(struct interval *v, int n, float map_size, float *gap_x) {
+    const float EPS = 1e-3f;
+    qsort(v, n, sizeof(*v), compare_intervals);
+    float cur = 0.0f;
     int i = 0;
-    
-    while (current_pos < map_size && i < count)
+    while (cur < map_size - EPS) 
     {
-        if (intervals[i].start >= current_pos + 1e-6)
-        {
-            // Gap found - return the gap location
-            *gap_x = current_pos;
+        if (i >= n || v[i].start > cur + EPS) 
+        { 
+            *gap_x = cur; 
             return false;
         }
-        
-        // Find the interval that extends furthest from current position
-        float max_end = intervals[i].end;
-        while (i < count && intervals[i].start <= current_pos + 1e-3)
-        {
-            max_end = fmax(max_end, intervals[i].end);
+        float best = cur;
+        while (i < n && v[i].start <= cur + EPS) 
+        { 
+            best = fmaxf(best, v[i].end); 
             i++;
         }
-        
-        current_pos = max_end;
+        if (best <= cur + EPS) 
+        { 
+            *gap_x = cur;
+            return false;
+        }
+        cur = best;
     }
-    
-    // Changed this condition - now we require coverage to reach exactly map_size
-    // If coverage stops before map_size, report gap at the limit + 0.001
-    if (current_pos < map_size)
-    {
-        *gap_x = current_pos + 0.001f;  // Gap at the very limit
-        return false;
-    }
-    
-    return true;  // Full coverage
+    return true;
 }
+
 
 bool check_full_coverage_optimized(struct rectangle *rectangles, int planes, int map_size, float *gap_x, float *gap_y)
 {
     // For each y-coordinate (integer), compute x-intervals covered by rectangles
-    for (int y = 0; y < map_size; y++)
+    for (float y = 0; y < map_size; y+=0.001)
     {
         struct interval y_intervals[100];  // Max 100 planes
         int interval_count = 0;
@@ -205,7 +190,14 @@ bool check_full_coverage_optimized(struct rectangle *rectangles, int planes, int
         // Check if intervals cover [0, map_size] for this y and find gap location
         if (!intervals_cover_range_with_gap(y_intervals, interval_count, map_size, gap_x))
         {
-            *gap_y = y + 0.001f;
+            if (y == 0)
+            {
+                *gap_y = y;
+            }
+            else 
+            {
+                *gap_y = y+0.001;
+            }
             return false;  // Gap found at y-coordinate
         }
     }
@@ -217,7 +209,7 @@ int main(int argc, char* argv[])
 {
     int map = 0;
     int planes = 0;
-    float x0,y0,x1,y1 = 0;
+    float x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f;
     FILE* fp, *fp2;
     
     if(argc > 1)

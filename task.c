@@ -133,6 +133,19 @@ int compare_intervals(const void *a, const void *b)
     return 0;
 }
 
+// Pick a point strictly inside the uncovered gap that starts at `cur`:
+// halfway to the next interval start (or to the map edge). `cur` itself is
+// the end of a strip, and strip edges count as covered.
+static float gap_point(struct interval *intervals, int i, int intervals_count, float cur, float map_size)
+{
+    if (cur <= 0.0f && (i >= intervals_count || intervals[i].start > 0.0f))
+        return 0.0f;
+    float next = map_size;
+    if (i < intervals_count && intervals[i].start < next)
+        next = intervals[i].start;
+    return (cur + next) / 2.0f;
+}
+
 // Check if intervals cover [0, map_size] and find gap location if exists
 bool intervals_cover_range_with_gap(struct interval *intervals, int intervals_count, float map_size, float *gap_x) {
     const float EPS = 1e-3f;
@@ -143,7 +156,7 @@ bool intervals_cover_range_with_gap(struct interval *intervals, int intervals_co
     {
         if (i >= intervals_count || intervals[i].start > cur + EPS) 
         { 
-            *gap_x = cur; 
+            *gap_x = gap_point(intervals, i, intervals_count, cur, map_size);
             return false;
         }
         float best = cur;
@@ -154,7 +167,7 @@ bool intervals_cover_range_with_gap(struct interval *intervals, int intervals_co
         }
         if (best <= cur + EPS) 
         { 
-            *gap_x = cur;
+            *gap_x = gap_point(intervals, i, intervals_count, cur, map_size);
             return false;
         }
         cur = best;

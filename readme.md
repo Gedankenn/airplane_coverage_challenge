@@ -181,7 +181,7 @@ For each horizontal line at y-coordinate:
 
 ## Edge Cases Handled
 
-- **Boundary coverage**: Gaps at map edges (reports `map_size + 0.001`)
+- **Boundary coverage**: Gaps at map edges are reported as the midpoint between the end of coverage and the edge (e.g. `150.500 0.000` for `test/INPUT_3.txt`), always inside the square
 - **Overlapping rectangles**: Correctly merges overlapping coverage areas
 - **Horizontal flight paths**: Handles degenerate cases where paths are horizontal
 - **Precision issues**: Uses epsilon values (1e-6) for floating-point comparisons
